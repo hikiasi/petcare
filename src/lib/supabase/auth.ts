@@ -3,12 +3,16 @@ import { supabase } from './client';
 
 // Sign up with email and password
 export async function signUp(email: string, password: string, metadata?: { full_name?: string }) {
+  const redirectUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/auth/verify`
+    : `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify`;
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: metadata,
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify`,
+      emailRedirectTo: redirectUrl,
     },
   });
 

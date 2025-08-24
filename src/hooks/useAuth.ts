@@ -9,7 +9,6 @@ import {
   signOut, 
   resetPassword, 
   updatePassword,
-  createProfile,
   checkEmailVerification,
   resendEmailVerification
 } from '@/lib/supabase/auth';
@@ -130,14 +129,9 @@ export function useAuth() {
         full_name: data.fullName,
       });
 
-      if (result.user) {
-        // Create profile
-        await createProfile(result.user.id, data.email);
-        
-        // If we have a pet name, we'll store it temporarily for after email verification
-        if (data.petName) {
-          localStorage.setItem('pendingPetName', data.petName);
-        }
+      // If we have a pet name, we'll store it temporarily for after email verification
+      if (data.petName) {
+        localStorage.setItem('pendingPetName', data.petName);
       }
 
       return result;

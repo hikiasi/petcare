@@ -1,152 +1,148 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
-export default function VerifyPage() {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
-  const [message, setMessage] = useState('');
+function VerifyContent() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
-
-  const { checkVerification, resendVerification, isLoading, user } = useAuth();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        // Check if user is already verified
-        const isVerified = await checkVerification();
-        
-        if (isVerified) {
-          setStatus('success');
-          setMessage('Email успешно подтвержден!');
-          
-          // Redirect to dashboard after 2 seconds
+        // Проверяем hash параметры из URL (новый формат Supabase)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        // Также проверяем query параметры (старый формат)
+        const token = searchParams.get('token');
+        const queryType = searchParams.get('type');
+
+        if (accessToken && refreshToken && type === 'signup') {
+          // Новый формат - устанавливаем сессию
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) throw error;
+
+          setSuccess(true);
           setTimeout(() => {
             router.push('/dashboard');
           }, 2000);
+
+        } else if (token && queryType) {
+          // Старый формат - используем verifyOtp
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: queryType as 'signup' | 'recovery' | 'email_change',
+          });
+
+          if (error) throw error;
+
+          setSuccess(true);
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 2000);
+
         } else {
-          setStatus('pending');
-          setMessage('Пожалуйста, проверьте вашу почту и нажмите на ссылку подтверждения.');
+          // Проверяем, может быть пользователь уже авторизован
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            setSuccess(true);
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 1000);
+          } else {
+            setError('Неверная ссылка верификации или ссылка устарела');
+          }
         }
-      } catch {
-        setStatus('error');
-        setMessage('Произошла ошибка при проверке email.');
+
+      } catch (error: unknown) {
+        console.error('Verification error:', error);
+        setError(error instanceof Error ? error.message : 'Произошла ошибка при верификации');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     verifyEmail();
-  }, [checkVerification, router]);
+  }, [searchParams, router]);
 
-  const handleResendVerification = async () => {
-    try {
-      await resendVerification();
-      setMessage('Письмо с подтверждением отправлено повторно. Проверьте вашу почту.');
-    } catch {
-      setMessage('Ошибка при отправке письма. Попробуйте позже.');
-    }
-  };
-
-  const getIcon = () => {
-    switch (status) {
-      case 'loading':
-        return <Loader2 className="h-12 w-12 animate-spin text-blue-500" />;
-      case 'success':
-        return <CheckCircle className="h-12 w-12 text-green-500" />;
-      case 'error':
-        return <XCircle className="h-12 w-12 text-red-500" />;
-      case 'pending':
-        return <Mail className="h-12 w-12 text-blue-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getTitle = () => {
-    switch (status) {
-      case 'loading':
-        return 'Проверка email...';
-      case 'success':
-        return 'Email подтвержден!';
-      case 'error':
-        return 'Ошибка подтверждения';
-      case 'pending':
-        return 'Подтвердите email';
-      default:
-        return '';
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p>Верифицируем ваш email...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="max-w-md w-full">
         <Card>
           <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              {getIcon()}
-            </div>
             <CardTitle className="text-2xl font-bold">
-              {getTitle()}
+              {success ? 'Email подтвержден!' : 'Ошибка верификации'}
             </CardTitle>
             <CardDescription>
-              {status === 'success' && 'Перенаправляем вас в личный кабинет...'}
-              {status === 'pending' && 'Мы отправили письмо с подтверждением на ваш email'}
-              {status === 'error' && 'Не удалось подтвердить email адрес'}
+              {success 
+                ? 'Ваш email успешно подтвержден. Перенаправляем в личный кабинет...'
+                : 'Не удалось подтвердить ваш email'
+              }
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {message && (
-              <Alert variant={status === 'error' ? 'destructive' : 'default'}>
-                <AlertDescription>{message}</AlertDescription>
+          <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            {success && (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  Добро пожаловать в PetCare! Сейчас вы будете перенаправлены в личный кабинет.
+                </AlertDescription>
               </Alert>
             )}
 
-            {status === 'pending' && user && (
+            {!success && (
               <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
-                  Письмо отправлено на: <strong>{user.email}</strong>
-                </p>
-                
-                <Button
-                  onClick={handleResendVerification}
-                  variant="outline"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Отправить повторно
-                </Button>
-              </div>
-            )}
-
-            {status === 'success' && (
-              <Button
-                onClick={() => router.push('/dashboard')}
-                className="w-full"
-              >
-                Перейти в личный кабинет
-              </Button>
-            )}
-
-            {status === 'error' && (
-              <div className="space-y-2">
-                <Button
+                <Button 
                   onClick={() => router.push('/auth/login')}
                   className="w-full"
                 >
                   Вернуться к входу
                 </Button>
-                <Button
-                  onClick={handleResendVerification}
+                <Button 
+                  onClick={() => router.push('/auth/register')}
                   variant="outline"
                   className="w-full"
-                  disabled={isLoading}
                 >
-                  Отправить письмо повторно
+                  Зарегистрироваться заново
                 </Button>
               </div>
             )}
@@ -154,5 +150,22 @@ export default function VerifyPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p>Загружаем...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
   );
 }
