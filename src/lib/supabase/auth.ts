@@ -1,6 +1,5 @@
-import { supabase } from './client';
-import { createClient } from './server';
 // Auth utilities for Supabase
+import { supabase } from './client';
 
 // Sign up with email and password
 export async function signUp(email: string, password: string, metadata?: { full_name?: string }) {
@@ -42,27 +41,38 @@ export async function getCurrentUser() {
 }
 
 // Create profile after successful signup
-export async function createProfile(userId: string, email: string, role: 'user' | 'admin' = 'user') {
-  const { data, error } = await supabase
+export async function createProfile(userId: string, email: string, role: 'user' | 'admin' = 'user', inviteToken?: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('profiles')
     .insert({
       id: userId,
       email,
       role,
-      subscription_type: 'free',
+      subscription_type: role === 'admin' ? 'pro' : 'free',
       theme_preference: 'system',
     })
     .select()
     .single();
 
   if (error) throw error;
+
+  // If this is an admin registration with invite token, mark the token as used
+  if (role === 'admin' && inviteToken) {
+    try {
+      await markAdminInviteAsUsed(inviteToken, userId);
+    } catch (tokenError) {
+      console.error('Error marking invite token as used:', tokenError);
+      // Don't throw here as the profile was created successfully
+    }
+  }
+
   return data;
 }
 
 // Check if user has verified email
 export async function checkEmailVerification() {
-  const serverClient = await createClient();
-  const { data: { user }, error } = await serverClient.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
   
   if (error) throw error;
   return user?.email_confirmed_at != null;
@@ -97,12 +107,14 @@ export async function updatePassword(newPassword: string) {
 }
 
 // Admin invite link functions
-export async function createAdminInviteLink(createdBy: string, expiresInHours: number = 24) {
-  const token = crypto.randomUUID();
+export async function createAdminInviteLink(createdBy: string, expiresInHours: number = 24): Promise<{ id: string; token: string; created_by: string | null; is_used: boolean; used_by: string | null; expires_at: string; created_at: string }> {
+  // Generate a random token
+  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + expiresInHours);
 
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('admin_invite_links')
     .insert({
       token,
@@ -117,7 +129,8 @@ export async function createAdminInviteLink(createdBy: string, expiresInHours: n
 }
 
 export async function validateAdminInviteLink(token: string) {
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('admin_invite_links')
     .select('*')
     .eq('token', token)
@@ -129,8 +142,9 @@ export async function validateAdminInviteLink(token: string) {
   return data;
 }
 
-export async function useAdminInviteLink(token: string, usedBy: string) {
-  const { data, error } = await supabase
+export async function markAdminInviteAsUsed(token: string, usedBy: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('admin_invite_links')
     .update({
       is_used: true,

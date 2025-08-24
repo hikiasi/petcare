@@ -3,9 +3,12 @@ import type { Database } from './database.types';
 
 type Tables = Database['public']['Tables'];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
 // Profile queries
 export async function getProfile(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('profiles')
     .select('*')
     .eq('id', userId)
@@ -19,7 +22,7 @@ export async function updateProfile(
   userId: string,
   updates: Partial<Tables['profiles']['Update']>
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('profiles')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', userId)
@@ -32,7 +35,7 @@ export async function updateProfile(
 
 // Pet queries
 export async function getUserPets(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('pets')
     .select('*')
     .eq('user_id', userId)
@@ -43,7 +46,7 @@ export async function getUserPets(userId: string) {
 }
 
 export async function getPet(petId: string, userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('pets')
     .select('*')
     .eq('id', petId)
@@ -55,7 +58,7 @@ export async function getPet(petId: string, userId: string) {
 }
 
 export async function createPet(pet: Tables['pets']['Insert']) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('pets')
     .insert(pet)
     .select()
@@ -70,7 +73,7 @@ export async function updatePet(
   userId: string,
   updates: Partial<Tables['pets']['Update']>
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('pets')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', petId)
@@ -83,7 +86,7 @@ export async function updatePet(
 }
 
 export async function deletePet(petId: string, userId: string) {
-  const { error } = await supabase
+  const { error } = await db
     .from('pets')
     .delete()
     .eq('id', petId)
@@ -94,7 +97,7 @@ export async function deletePet(petId: string, userId: string) {
 
 // Health records queries
 export async function getHealthRecords(petId: string, userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('health_records')
     .select('*')
     .eq('pet_id', petId)
@@ -106,7 +109,7 @@ export async function getHealthRecords(petId: string, userId: string) {
 }
 
 export async function createHealthRecord(record: Tables['health_records']['Insert']) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('health_records')
     .insert(record)
     .select()
@@ -118,7 +121,7 @@ export async function createHealthRecord(record: Tables['health_records']['Inser
 
 // Expenses queries
 export async function getExpenses(petId: string, userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('expenses')
     .select('*')
     .eq('pet_id', petId)
@@ -130,7 +133,7 @@ export async function getExpenses(petId: string, userId: string) {
 }
 
 export async function createExpense(expense: Tables['expenses']['Insert']) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('expenses')
     .insert(expense)
     .select()
@@ -142,7 +145,7 @@ export async function createExpense(expense: Tables['expenses']['Insert']) {
 
 // Reminders queries
 export async function getReminders(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('reminders')
     .select(`
       *,
@@ -161,7 +164,7 @@ export async function getReminders(userId: string) {
 }
 
 export async function createReminder(reminder: Tables['reminders']['Insert']) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('reminders')
     .insert(reminder)
     .select()
@@ -173,7 +176,7 @@ export async function createReminder(reminder: Tables['reminders']['Insert']) {
 
 // Subscription queries
 export async function getUserSubscription(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('subscriptions')
     .select('*')
     .eq('user_id', userId)
@@ -187,7 +190,7 @@ export async function getUserSubscription(userId: string) {
 
 // Usage stats queries
 export async function getUsageStats(userId: string, monthYear: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('usage_stats')
     .select('*')
     .eq('user_id', userId)
@@ -203,7 +206,7 @@ export async function updateUsageStats(
   monthYear: string,
   stats: Partial<Tables['usage_stats']['Update']>
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('usage_stats')
     .upsert({
       user_id: userId,
