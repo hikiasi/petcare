@@ -45,6 +45,9 @@ export function useAuth() {
         
         if (error) {
           console.error('Error getting session:', error);
+          if (mounted) {
+            setLoading(false);
+          }
           return;
         }
 
@@ -60,6 +63,7 @@ export function useAuth() {
             }
           } catch (profileError) {
             console.error('Error getting profile:', profileError);
+            // Don't throw here, just continue without profile
           }
         }
       } catch (error) {

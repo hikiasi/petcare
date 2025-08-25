@@ -10,7 +10,7 @@ export default function RegisterPage() {
       </div>
       
       <div className="max-w-md w-full space-y-8">
-        <AuthForm mode="register" showPetName />
+        <AuthForm mode="register" />
         
         <div className="text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">

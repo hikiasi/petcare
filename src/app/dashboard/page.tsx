@@ -4,18 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, profile, logout, isLoading } = useAuth();
+  const { user, profile, logout } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

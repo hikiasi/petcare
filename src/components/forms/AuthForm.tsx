@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -24,6 +25,7 @@ export function AuthForm({ mode, onSuccess, showPetName = false }: AuthFormProps
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   const { login, register: registerUser, isLoading } = useAuth();
 
@@ -47,6 +49,7 @@ export function AuthForm({ mode, onSuccess, showPetName = false }: AuthFormProps
       if (isLogin) {
         await login(data as LoginFormData);
         onSuccess?.();
+        router.push('/dashboard');
       } else {
         await registerUser(data as RegisterFormData);
         setSuccess(
