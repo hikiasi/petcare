@@ -126,24 +126,40 @@ export function useSubscription() {
         }
       }
 
-      // Lazy import YuKassa API
-      const { yuKassaAPI } = await import('@/lib/payments/yukassa');
-      
-      const payment = await yuKassaAPI.createPayment({
-        amount: finalAmount,
-        description: promoCode 
-          ? `Подписка PetCare PRO на 1 месяц (промокод: ${promoCode})`
-          : 'Подписка PetCare PRO на 1 месяц',
-        userId: user.id,
-        planType: 'pro',
-        returnUrl,
-        metadata: {
-          subscription_type: 'monthly',
-          ...(promoCode && { promo_code: promoCode }),
-          original_amount: SUBSCRIPTION_PRICES.pro.toString(),
-          discount_amount: discountAmount.toString(),
+      // Создаем платеж через API роут
+      const response = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          amount: finalAmount,
+          description: promoCode 
+            ? `Подписка PetCare PRO на 1 месяц (промокод: ${promoCode})`
+            : 'Подписка PetCare PRO на 1 месяц',
+          userId: user.id,
+          planType: 'pro',
+          returnUrl,
+          metadata: {
+            subscription_type: 'monthly',
+            ...(promoCode && { promo_code: promoCode }),
+            original_amount: SUBSCRIPTION_PRICES.pro.toString(),
+            discount_amount: discountAmount.toString(),
+          },
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка создания платежа');
+      }
+
+      const payment = await response.json();
+
+      // Сохраняем payment_id в localStorage для использования на странице успеха
+      if (payment.id && typeof window !== 'undefined') {
+        localStorage.setItem('pending_payment_id', payment.id);
+      }
 
       setState(prev => ({ ...prev, loading: false }));
       return payment;
@@ -161,11 +177,17 @@ export function useSubscription() {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
-      // Lazy import YuKassa API
-      const { yuKassaAPI } = await import('@/lib/payments/yukassa');
-      
-      // Получаем информацию о платеже
-      const payment = await yuKassaAPI.getPayment(paymentId);
+      // Получаем информацию о платеже через API роут
+      const response = await fetch(`/api/payments/${paymentId}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка получения информации о платеже');
+      }
+
+      const payment = await response.json();
       
       if (payment.status !== 'succeeded') {
         throw new Error('Платеж не был успешно завершен');
@@ -264,6 +286,7 @@ export function useSubscription() {
 
   return {
     ...state,
+    user,
     startTrial,
     createProPayment,
     handleSuccessfulPayment,

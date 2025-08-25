@@ -10,14 +10,27 @@ import { CheckCircle, AlertCircle, ArrowLeft, Crown } from 'lucide-react';
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { handleSuccessfulPayment, refetch } = useSubscription();
+  const { handleSuccessfulPayment, refetch, user } = useSubscription();
   
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const processPayment = async () => {
-      const paymentId = searchParams.get('payment_id');
+      // Ждем загрузки пользователя
+      if (!user) {
+        return;
+      }
+
+      // Пробуем получить payment_id из разных источников
+      let paymentId = searchParams.get('payment_id') || 
+                     searchParams.get('paymentId') || 
+                     searchParams.get('id');
+      
+      // Если payment_id не найден в URL, проверяем localStorage
+      if (!paymentId && typeof window !== 'undefined') {
+        paymentId = localStorage.getItem('pending_payment_id');
+      }
       
       if (!paymentId) {
         setStatus('error');
@@ -28,6 +41,12 @@ export default function PaymentSuccessPage() {
       try {
         await handleSuccessfulPayment(paymentId);
         await refetch(); // Обновляем статус подписки
+        
+        // Очищаем сохраненный payment_id после успешной обработки
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('pending_payment_id');
+        }
+        
         setStatus('success');
       } catch (error) {
         console.error('Payment processing error:', error);
@@ -36,8 +55,11 @@ export default function PaymentSuccessPage() {
       }
     };
 
-    processPayment();
-  }, [searchParams, handleSuccessfulPayment, refetch]);
+    // Запускаем только один раз при монтировании компонента и когда пользователь загружен
+    if (status === 'processing' && user) {
+      processPayment();
+    }
+  }, [user, searchParams]); // Добавляем user в зависимости
 
   if (status === 'processing') {
     return (
