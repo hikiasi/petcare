@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Home, 
-  Heart, 
-  Calculator, 
-  Bell, 
-  Settings, 
+import {
+  Home,
+  Heart,
+  Calculator,
+  Bell,
+  Settings,
   LogOut,
   User,
   Menu,
@@ -74,9 +74,8 @@ export default function DashboardLayout({
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0`}>
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0`}>
         <div className="flex flex-col h-full">
           {/* Логотип */}
           <div className="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -123,7 +122,7 @@ export default function DashboardLayout({
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <ThemeToggle />
               <Button
@@ -142,7 +141,7 @@ export default function DashboardLayout({
 
       {/* Overlay для мобильного меню */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />

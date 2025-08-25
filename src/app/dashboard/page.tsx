@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { PetCard } from '@/components/dashboard/PetCard';
 import { AddPetForm } from '@/components/dashboard/AddPetForm';
+import { SubscriptionStatus } from '@/components/subscription/SubscriptionStatus';
+import { LimitGate, LimitWarning, useProFeatureAccess } from '@/components/subscription/ProFeatureGate';
 import { usePets } from '@/hooks/usePets';
+import { useSubscription } from '@/hooks/useSubscription';
 import { 
   Plus, 
   Heart, 
@@ -18,6 +21,8 @@ import {
 
 export default function DashboardPage() {
   const { pets, loading } = usePets();
+  const { limits } = useSubscription();
+  const { canAddPet } = useProFeatureAccess();
   const [showAddPetForm, setShowAddPetForm] = useState(false);
 
   // Мок данные для демонстрации
@@ -47,17 +52,20 @@ export default function DashboardPage() {
           </p>
         </div>
         
-        {/* Статус подписки */}
-        <div className="flex items-center gap-3">
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Crown className="h-3 w-3" />
-            Бесплатный план
-          </Badge>
-          <Button variant="outline" size="sm">
-            Обновить до PRO
-          </Button>
-        </div>
+
       </div>
+
+      {/* Статус подписки */}
+      <SubscriptionStatus />
+
+      {/* Предупреждение о лимитах */}
+      {limits && (
+        <LimitWarning
+          currentCount={pets?.length || 0}
+          maxCount={limits.maxPets}
+          itemName="питомцев"
+        />
+      )}
 
       {/* Статистика */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -127,7 +135,9 @@ export default function DashboardPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     Мои питомцы
-                    <Badge variant="secondary">{pets?.length || 0}/2</Badge>
+                    <Badge variant="secondary">
+                      {pets?.length || 0}/{limits?.maxPets === -1 ? '∞' : limits?.maxPets || 2}
+                    </Badge>
                   </CardTitle>
                   <CardDescription>
                     Управляйте профилями ваших питомцев
@@ -136,7 +146,7 @@ export default function DashboardPage() {
                 <Button 
                   onClick={() => setShowAddPetForm(true)}
                   className="flex items-center gap-2"
-                  disabled={pets && pets.length >= 2}
+                  disabled={!canAddPet}
                 >
                   <Plus className="h-4 w-4" />
                   Добавить питомца
@@ -155,19 +165,25 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">🐾</div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Добавьте своего первого питомца
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Создайте профиль питомца, чтобы начать отслеживать его здоровье и расходы
-                  </p>
-                  <Button onClick={() => setShowAddPetForm(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Добавить питомца
-                  </Button>
-                </div>
+                <LimitGate
+                  currentCount={0}
+                  maxCount={limits?.maxPets || 2}
+                  itemName="питомцев"
+                >
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">🐾</div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Добавьте своего первого питомца
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Создайте профиль питомца, чтобы начать отслеживать его здоровье и расходы
+                    </p>
+                    <Button onClick={() => setShowAddPetForm(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Добавить питомца
+                    </Button>
+                  </div>
+                </LimitGate>
               )}
             </CardContent>
           </Card>
