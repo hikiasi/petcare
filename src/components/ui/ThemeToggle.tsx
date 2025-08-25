@@ -9,28 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/useAuth';
-import { updateProfile } from '@/lib/supabase/queries';
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
-  const { user, refreshProfile } = useAuth();
-
-  const handleThemeChange = async (newTheme: string) => {
-    setTheme(newTheme);
-    
-    // Save theme preference to user profile
-    if (user) {
-      try {
-        await updateProfile(user.id, {
-          theme_preference: newTheme as 'light' | 'dark' | 'system',
-        });
-        await refreshProfile();
-      } catch (error) {
-        console.error('Error saving theme preference:', error);
-      }
-    }
-  };
 
   return (
     <DropdownMenu>
@@ -42,15 +23,15 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleThemeChange('light')}>
+        <DropdownMenuItem onClick={() => setTheme('light')}>
           <Sun className="mr-2 h-4 w-4" />
           <span>Светлая</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleThemeChange('dark')}>
+        <DropdownMenuItem onClick={() => setTheme('dark')}>
           <Moon className="mr-2 h-4 w-4" />
           <span>Темная</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleThemeChange('system')}>
+        <DropdownMenuItem onClick={() => setTheme('system')}>
           <Monitor className="mr-2 h-4 w-4" />
           <span>Системная</span>
         </DropdownMenuItem>

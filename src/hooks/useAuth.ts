@@ -1,244 +1,86 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import { useAuthStore } from '@/store/authStore';
-import { getProfile } from '@/lib/supabase/queries';
-import { 
-  signUp, 
-  signIn, 
-  signOut, 
-  resetPassword, 
-  updatePassword,
-  checkEmailVerification,
-  resendEmailVerification
-} from '@/lib/supabase/auth';
 import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
 
 export function useAuth() {
-  const router = useRouter();
-  const {
-    user,
-    profile,
-    isLoading,
-    isEmailVerified,
-    setUser,
-    setProfile,
-    setLoading,
-    setEmailVerified,
-    clearAuth,
-    isAuthenticated,
-    isAdmin,
-    isPro,
-    isTrialActive,
-  } = useAuthStore();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize auth state
   useEffect(() => {
-    let mounted = true;
+    // Получаем текущего пользователя
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoading(false);
+    };
 
-    async function initializeAuth() {
-      try {
-        setLoading(true);
-        
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          if (mounted) {
-            setLoading(false);
-          }
-          return;
-        }
+    getUser();
 
-        if (session?.user && mounted) {
-          setUser(session.user);
-          setEmailVerified(!!session.user.email_confirmed_at);
-          
-          // Get user profile
-          try {
-            const userProfile = await getProfile(session.user.id);
-            if (mounted) {
-              setProfile(userProfile);
-            }
-          } catch (profileError) {
-            console.error('Error getting profile:', profileError);
-            // Don't throw here, just continue without profile
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    initializeAuth();
-
-    // Listen for auth changes
+    // Подписываемся на изменения аутентификации
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
-
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user);
-          setEmailVerified(!!session.user.email_confirmed_at);
-          
-          try {
-            const userProfile = await getProfile(session.user.id);
-            setProfile(userProfile);
-          } catch (error) {
-            console.error('Error getting profile after sign in:', error);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          clearAuth();
-          router.push('/');
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          setUser(session.user);
-        }
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [setUser, setProfile, setLoading, setEmailVerified, clearAuth, router]);
+    return () => subscription.unsubscribe();
+  }, []);
 
-  // Auth actions
   const login = async (data: LoginFormData) => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const result = await signIn(data.email, data.password);
-      
-      if (result.user && !result.user.email_confirmed_at) {
-        throw new Error('Пожалуйста, подтвердите ваш email адрес');
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
       }
-      
-      return result;
-    } catch (error) {
-      throw error;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const register = async (data: RegisterFormData) => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      
-      const result = await signUp(data.email, data.password, {
-        full_name: data.fullName,
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName || '',
+          },
+        },
       });
 
-      // If we have a pet name, we'll store it temporarily for after email verification
-      if (data.petName) {
-        localStorage.setItem('pendingPetName', data.petName);
+      if (error) {
+        throw new Error(error.message);
       }
-
-      return result;
-    } catch (error) {
-      throw error;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const logout = async () => {
-    try {
-      setLoading(true);
-      await signOut();
-      clearAuth();
-      router.push('/');
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendPasswordReset = async (email: string) => {
-    try {
-      setLoading(true);
-      await resetPassword(email);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const changePassword = async (newPassword: string) => {
-    try {
-      setLoading(true);
-      await updatePassword(newPassword);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resendVerification = async () => {
-    if (!user?.email) {
-      throw new Error('Пользователь не найден');
-    }
-    
-    try {
-      setLoading(true);
-      await resendEmailVerification(user.email);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkVerification = async () => {
-    try {
-      const verified = await checkEmailVerification();
-      setEmailVerified(verified);
-      return verified;
-    } catch (error) {
-      console.error('Error checking verification:', error);
-      return false;
-    }
-  };
-
-  const refreshProfile = async () => {
-    if (!user) return;
-    
-    try {
-      const userProfile = await getProfile(user.id);
-      setProfile(userProfile);
-      return userProfile;
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
-      throw error;
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
     }
   };
 
   return {
-    // State
     user,
-    profile,
+    loading,
     isLoading,
-    isEmailVerified,
-    isAuthenticated: isAuthenticated(),
-    isAdmin: isAdmin(),
-    isPro: isPro(),
-    isTrialActive: isTrialActive(),
-    
-    // Actions
     login,
     register,
-    logout,
-    sendPasswordReset,
-    changePassword,
-    resendVerification,
-    checkVerification,
-    refreshProfile,
+    signOut,
   };
 }
