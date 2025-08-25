@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 export function Footer() {
@@ -14,12 +16,12 @@ export function Footer() {
               <span className="text-xl font-bold">PetCare</span>
             </div>
             <p className="text-gray-400 mb-4 max-w-md">
-              Простой органайзер для владельцев питомцев. Ведите дневник здоровья, 
+              Простой органайзер для владельцев питомцев. Ведите дневник здоровья,
               отслеживайте расходы и получайте напоминания о важных процедурах.
             </p>
             <div className="flex space-x-4">
-              <a 
-                href="mailto:support@petcare.ru" 
+              <a
+                href="mailto:support@petcare.ru"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 support@petcare.ru
@@ -32,7 +34,7 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Продукт</h3>
             <ul className="space-y-2">
               <li>
-                <button 
+                <button
                   onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
@@ -40,7 +42,7 @@ export function Footer() {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
@@ -48,7 +50,7 @@ export function Footer() {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
@@ -86,17 +88,17 @@ export function Footer() {
             © 2025 PetCare. Все права защищены.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <a 
-              href="https://t.me/petcare_support" 
-              target="_blank" 
+            <a
+              href="https://t.me/petcare_support"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-gray-400 hover:text-white transition-colors"
             >
               Telegram
             </a>
-            <a 
-              href="https://instagram.com/petcare_ru" 
-              target="_blank" 
+            <a
+              href="https://instagram.com/petcare_ru"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-gray-400 hover:text-white transition-colors"
             >

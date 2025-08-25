@@ -42,7 +42,7 @@ export default function ResetPasswordPage() {
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      
+
       <div className="max-w-md w-full">
         <Card>
           <CardHeader className="text-center">
@@ -77,9 +77,9 @@ export default function ResetPasswordPage() {
                 </Alert>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={isLoading}
               >
                 {isLoading ? 'Отправляем...' : 'Отправить ссылку'}
@@ -87,8 +87,8 @@ export default function ResetPasswordPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <Link 
-                href="/auth/login" 
+              <Link
+                href="/auth/login"
                 className="text-sm text-green-600 hover:text-green-500"
               >
                 Вернуться к входу

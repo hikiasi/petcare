@@ -72,6 +72,11 @@ export function Header() {
           {/* CTA и переключатель темы для десктопа */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
+            <Link href="/auth/login">
+              <Button variant="ghost" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                Вход
+              </Button>
+            </Link>
             <Link href="/auth/register">
               <Button className="bg-green-500 hover:bg-green-600 text-white">
                 НАЧАТЬ БЕСПЛАТНО
@@ -117,7 +122,12 @@ export function Header() {
               >
                 Отзывы
               </button>
-              <div className="px-3 py-2">
+              <div className="px-3 py-2 space-y-2">
+                <Link href="/auth/login" className="block">
+                  <Button variant="outline" className="w-full">
+                    Вход
+                  </Button>
+                </Link>
                 <Link href="/auth/register" className="block">
                   <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
                     НАЧАТЬ БЕСПЛАТНО

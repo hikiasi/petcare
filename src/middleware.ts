@@ -35,8 +35,19 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/auth/login', '/auth/register', '/auth/verify'];
-  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/api/webhooks');
+  const publicRoutes = [
+    '/', 
+    '/auth/login', 
+    '/auth/register', 
+    '/auth/verify', 
+    '/auth/reset-password', 
+    '/auth/update-password',
+    '/privacy',
+    '/terms'
+  ];
+  const isPublicRoute = publicRoutes.includes(pathname) || 
+                       pathname.startsWith('/api/webhooks') ||
+                       pathname.startsWith('/(landing)');
 
   // Admin routes
   const isAdminRoute = pathname.startsWith('/admin');
@@ -67,10 +78,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    // Redirect root to dashboard for authenticated users
-    if (pathname === '/') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+    // Don't redirect authenticated users from landing page
+    // They can still view the landing page if they want
   }
 
   return supabaseResponse;
