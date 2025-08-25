@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { yuKassaAPI } from '@/lib/payments/yukassa';
 import { SubscriptionManager } from '@/lib/utils/subscription';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 
 // Интерфейс для webhook уведомления от ЮKassa
 interface YuKassaWebhookEvent {
@@ -29,6 +29,12 @@ interface YuKassaWebhookEvent {
 
 export async function POST(request: NextRequest) {
   try {
+    // Создаем серверный клиент Supabase с service role ключом
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
     const body: YuKassaWebhookEvent = await request.json();
     
     console.log('YuKassa webhook received:', body);
@@ -56,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Записываем платеж в базу данных
-    const { error: paymentError } = await (supabase as any)
+    const { error: paymentError } = await supabase
       .from('payments')
       .insert({
         user_id: userId,
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest) {
     try {
       const existingSubscription = await SubscriptionManager.getUserSubscription(userId);
       
-      if (existingSubscription && existingSubscription.status === 'trial') {
+      if (existingSubscription && (existingSubscription as any).status === 'trial') {
         // Переводим триал в активную подписку
         await SubscriptionManager.activatePaidSubscription(userId, payment.id);
         console.log('Trial subscription activated for user:', userId);

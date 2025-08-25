@@ -131,7 +131,7 @@ export function CancelSubscriptionDialog({
                     id={reason}
                     checked={selectedReasons.includes(reason)}
                     onCheckedChange={(checked) => 
-                      handleReasonChange(reason, checked as boolean)
+                      handleReasonChange(reason, checked === true)
                     }
                   />
                   <Label htmlFor={reason} className="text-sm">
@@ -162,7 +162,7 @@ export function CancelSubscriptionDialog({
             <Checkbox
               id="confirm-cancellation"
               checked={confirmed}
-              onCheckedChange={setConfirmed}
+              onCheckedChange={(checked) => setConfirmed(checked === true)}
             />
             <Label htmlFor="confirm-cancellation" className="text-sm">
               Я понимаю, что подписка будет отменена

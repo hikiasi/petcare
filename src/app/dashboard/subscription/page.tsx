@@ -274,7 +274,7 @@ export default function SubscriptionPage() {
               </li>
             </ul>
 
-            {!isPro && !subscription && (
+            {!isPro && (
               <div className="space-y-3">
                 <Button 
                   className="w-full bg-green-500 hover:bg-green-600 text-white"
@@ -301,7 +301,7 @@ export default function SubscriptionPage() {
               </div>
             )}
 
-            {isTrialActive && (
+            {isTrialActive && subscription?.status !== 'canceled' && (
               <Button 
                 className="w-full bg-green-500 hover:bg-green-600 text-white"
                 onClick={handleUpgradeToPro}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import {
   Home,
   Heart,
@@ -15,7 +16,9 @@ import {
   LogOut,
   User,
   Menu,
-  X
+  X,
+  Crown,
+  Gift
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,6 +28,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, loading, signOut } = useAuth();
+  const { isPro, isTrialActive, getTrialDaysLeft } = useSubscription();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -117,9 +121,25 @@ export default function DashboardLayout({
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {user.email}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Бесплатный план
-                </p>
+                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                  {isPro ? (
+                    <>
+                      {isTrialActive ? (
+                        <>
+                          <Gift className="h-3 w-3 text-green-500" />
+                          <span>Пробный период ({getTrialDaysLeft()} дн.)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Crown className="h-3 w-3 text-green-500" />
+                          <span>PRO план</span>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <span>Бесплатный план</span>
+                  )}
+                </div>
               </div>
             </div>
 

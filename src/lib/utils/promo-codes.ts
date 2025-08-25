@@ -44,7 +44,7 @@ export class PromoCodeManager {
       }
 
       // Проверяем срок действия
-      if (promoCode.expires_at && new Date(promoCode.expires_at) < new Date()) {
+      if ((promoCode as any).expires_at && new Date((promoCode as any).expires_at) < new Date()) {
         return {
           isValid: false,
           discount: 0,
@@ -54,7 +54,7 @@ export class PromoCodeManager {
       }
 
       // Проверяем лимит использований
-      if (promoCode.max_uses && promoCode.current_uses >= promoCode.max_uses) {
+      if ((promoCode as any).max_uses && (promoCode as any).current_uses >= (promoCode as any).max_uses) {
         return {
           isValid: false,
           discount: 0,
@@ -65,8 +65,8 @@ export class PromoCodeManager {
 
       return {
         isValid: true,
-        discount: promoCode.discount_value,
-        discountType: promoCode.discount_type,
+        discount: (promoCode as any).discount_value,
+        discountType: (promoCode as any).discount_type,
       };
     } catch (error) {
       console.error('Error validating promo code:', error);
@@ -84,7 +84,7 @@ export class PromoCodeManager {
    */
   static async applyPromoCode(code: string): Promise<boolean> {
     try {
-      const { error } = await supabase.rpc('increment_promo_code_usage', {
+      const { error } = await (supabase as any).rpc('increment_promo_code_usage', {
         promo_code: code.toUpperCase()
       });
 
@@ -121,7 +121,7 @@ export class PromoCodeManager {
     expires_at?: string;
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('promo_codes')
         .insert({
           code: promoCode.code.toUpperCase(),
@@ -174,7 +174,7 @@ export class PromoCodeManager {
    */
   static async deactivatePromoCode(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('promo_codes')
         .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq('id', id);
@@ -191,7 +191,7 @@ export class PromoCodeManager {
    */
   static async activatePromoCode(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('promo_codes')
         .update({ is_active: true, updated_at: new Date().toISOString() })
         .eq('id', id);

@@ -15,7 +15,6 @@ import {
   Heart, 
   Calculator, 
   Bell, 
-  Crown,
   Calendar
 } from 'lucide-react';
 

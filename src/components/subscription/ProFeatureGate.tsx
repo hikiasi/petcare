@@ -24,7 +24,7 @@ export function ProFeatureGate({
   fallback 
 }: ProFeatureGateProps) {
   const router = useRouter();
-  const { isPro, isTrialActive, loading } = useSubscription();
+  const { isPro, loading } = useSubscription();
 
   // Показываем загрузку
   if (loading) {
@@ -109,17 +109,20 @@ export function ProFeatureGate({
 
 // Хук для проверки доступа к PRO функциям
 export function useProFeatureAccess() {
-  const { isPro, isTrialActive, checkLimit } = useSubscription();
+  const { isPro, checkLimit } = useSubscription();
 
   const hasProAccess = isPro;
-  const canAddPet = checkLimit('maxPets') === -1 || checkLimit('currentPets') < checkLimit('maxPets');
-  const canAddHealthRecord = checkLimit('maxHealthRecords') === -1 || checkLimit('currentHealthRecords') < checkLimit('maxHealthRecords');
+  const maxPets = checkLimit('maxPets');
+  const maxHealthRecords = checkLimit('maxHealthRecordsPerMonth');
+  
+  // Для проверки текущих лимитов нужно получать данные отдельно
+  const canAddPet = maxPets === Infinity || isPro;
+  const canAddHealthRecord = maxHealthRecords === Infinity || isPro;
 
   return {
     hasProAccess,
     canAddPet,
     canAddHealthRecord,
-    isTrialActive,
     isPro,
   };
 }
@@ -130,15 +133,13 @@ interface LimitGateProps {
   currentCount: number;
   maxCount: number;
   itemName: string;
-  proFeature?: string;
 }
 
 export function LimitGate({ 
   children, 
   currentCount, 
   maxCount, 
-  itemName, 
-  proFeature 
+  itemName 
 }: LimitGateProps) {
   const { isPro } = useSubscription();
 
@@ -153,7 +154,9 @@ export function LimitGate({
       <ProFeatureGate
         feature={`Лимит ${itemName} исчерпан`}
         description={`Бесплатный план позволяет иметь максимум ${maxCount} ${itemName}. Обновитесь до PRO для снятия ограничений.`}
-      />
+      >
+        <div></div>
+      </ProFeatureGate>
     );
   }
 

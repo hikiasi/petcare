@@ -79,14 +79,14 @@ export function useSubscription() {
       // Обновляем профиль пользователя
       await SubscriptionManager.updateUserProfile(user.id, 'pro');
 
-      // Отправляем email уведомление о начале пробного периода
-      try {
-        const { SubscriptionEmailManager } = await import('@/lib/email/subscription-emails');
-        await SubscriptionEmailManager.sendTrialStartedEmail(user.id);
-      } catch (emailError) {
-        console.error('Error sending trial started email:', emailError);
-        // Не блокируем процесс из-за ошибки email
-      }
+      // Отправляем email уведомление о начале пробного периода (временно отключено)
+      // try {
+      //   const { SubscriptionEmailManager } = await import('@/lib/email/subscription-emails');
+      //   await SubscriptionEmailManager.sendTrialStartedEmail(user.id);
+      // } catch (emailError) {
+      //   console.error('Error sending trial started email:', emailError);
+      //   // Не блокируем процесс из-за ошибки email
+      // }
 
       // Перезагружаем статус
       await loadSubscriptionStatus();
@@ -106,7 +106,7 @@ export function useSubscription() {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
-      let finalAmount = SUBSCRIPTION_PRICES.pro;
+      let finalAmount: number = SUBSCRIPTION_PRICES.pro;
       let discountAmount = 0;
       
       // Если есть промокод, применяем скидку
@@ -139,7 +139,7 @@ export function useSubscription() {
         returnUrl,
         metadata: {
           subscription_type: 'monthly',
-          promo_code: promoCode || undefined,
+          ...(promoCode && { promo_code: promoCode }),
           original_amount: SUBSCRIPTION_PRICES.pro.toString(),
           discount_amount: discountAmount.toString(),
         },
@@ -174,7 +174,7 @@ export function useSubscription() {
       // Активируем или создаем подписку
       const existingSubscription = await SubscriptionManager.getUserSubscription(user.id);
       
-      if (existingSubscription && existingSubscription.status === 'trial') {
+      if (existingSubscription && (existingSubscription as any).status === 'trial') {
         // Переводим триал в активную подписку
         await SubscriptionManager.activatePaidSubscription(user.id, paymentId);
       } else {
@@ -196,14 +196,14 @@ export function useSubscription() {
       // Обновляем профиль пользователя
       await SubscriptionManager.updateUserProfile(user.id, 'pro');
 
-      // Отправляем email уведомление об активации подписки
-      try {
-        const { SubscriptionEmailManager } = await import('@/lib/email/subscription-emails');
-        await SubscriptionEmailManager.sendSubscriptionActivatedEmail(user.id, payment.amount.value);
-      } catch (emailError) {
-        console.error('Error sending subscription activated email:', emailError);
-        // Не блокируем процесс из-за ошибки email
-      }
+      // Отправляем email уведомление об активации подписки (временно отключено)
+      // try {
+      //   const { SubscriptionEmailManager } = await import('@/lib/email/subscription-emails');
+      //   await SubscriptionEmailManager.sendSubscriptionActivatedEmail(user.id, payment.amount.value);
+      // } catch (emailError) {
+      //   console.error('Error sending subscription activated email:', emailError);
+      //   // Не блокируем процесс из-за ошибки email
+      // }
 
       // Перезагружаем статус
       await loadSubscriptionStatus();

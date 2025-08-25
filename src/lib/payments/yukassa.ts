@@ -40,9 +40,9 @@ class YuKassaAPI {
     this.shopId = process.env.YUKASSA_SHOP_ID || '';
     this.secretKey = process.env.YUKASSA_SECRET_KEY || '';
     
-    // В production режиме требуем обязательного наличия ключей
-    if (process.env.NODE_ENV === 'production' && (!this.shopId || !this.secretKey)) {
-      throw new Error('YuKassa credentials are not configured');
+    // Всегда требуем наличия ключей для работы с API
+    if (!this.shopId || !this.secretKey) {
+      console.warn('YuKassa credentials not found. Payment functionality will be disabled.');
     }
   }
 

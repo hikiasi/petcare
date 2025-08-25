@@ -38,7 +38,7 @@ export function PromoCodeInput({ onPromoApplied, onPromoRemoved, disabled }: Pro
       } else {
         setError(validation.error || 'Промокод недействителен');
       }
-    } catch (error) {
+    } catch {
       setError('Ошибка проверки промокода');
     } finally {
       setIsValidating(false);
